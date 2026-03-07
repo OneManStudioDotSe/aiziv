@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIZIA // AUDIO VISUALIZER</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Three.js Import Map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="ui-container">
+        <!-- Main Sidebar (Top Right) -->
+        <div class="panel main-panel">
+            <div class="zen-icon"><i data-lucide="settings"></i></div>
+            <div class="panel-content">
+                <header>
+                    <h1>VIZIA</h1>
+                    <p>2026 // v0.1.0</p>
+                </header>
+
+                <section id="source-section" class="right-aligned">
+                    <h3>SOURCE</h3>
+                    <div class="button-group-sm">
+                        <button id="btn-mic" class="btn-xs" title="Microphone">
+                            <i data-lucide="mic" size="16"></i>
+                        </button>
+                        <button id="btn-file" class="btn-xs" title="Local File">
+                            <i data-lucide="upload" size="16"></i>
+                        </button>
+                    </div>
+                    <input type="file" id="file-input" hidden accept="audio/*">
+                    
+                    <div class="playback-container">
+                        <div class="info-box text-right">
+                            <span id="track-name">No source selected</span>
+                        </div>
+                        <div class="playback-controls reverse">
+                            <div class="progress-info">
+                                <div class="time-labels">
+                                    <span id="current-time">0:00</span>
+                                    <span id="total-duration">0:00</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div id="progress-bar-fill"></div>
+                                    <input type="range" id="progress-slider" min="0" max="100" value="0">
+                                </div>
+                            </div>
+                            <button id="btn-toggle-play" class="btn-sm" title="Play/Pause">
+                                <i id="play-pause-icon" data-lucide="play"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="brutal-volume-section">
+                            <span>VOL</span>
+                            <div id="volume-meter" class="volume-meter">
+                                <div class="vol-segment"></div>
+                                <div class="vol-segment"></div>
+                                <div class="vol-segment"></div>
+                                <div class="vol-segment"></div>
+                                <div class="vol-segment"></div>
+                                <div class="vol-segment"></div>
+                                <div class="vol-segment"></div>
+                                <div class="vol-segment"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Visuals Panel (Bottom Right) -->
+        <div id="visuals-panel" class="panel visuals-panel">
+            <div class="zen-icon"><i data-lucide="layers"></i></div>
+            <div class="panel-content">
+                <div id="sub-controls-area" class="sub-controls-area"></div>
+                <div id="sub-visuals-area" class="sub-visuals-area"></div>
+                <div id="category-row" class="category-row"></div>
+                <div id="visuals-header">
+                    <span>VISUALS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scene Controls (Center Bottom) -->
+        <div id="scene-controls" class="panel scene-controls-panel">
+            <div class="zen-icon"><i data-lucide="move"></i></div>
+            <div class="panel-content">
+                <button id="btn-zoom-in" class="btn-mini" title="Zoom In"><i data-lucide="zoom-in"></i></button>
+                <button id="btn-zoom-out" class="btn-mini" title="Zoom Out"><i data-lucide="zoom-out"></i></button>
+                <div class="separator-v"></div>
+                <button id="btn-pan-left" class="btn-mini" title="Pan Left"><i data-lucide="arrow-left"></i></button>
+                <button id="btn-pan-right" class="btn-mini" title="Pan Right"><i data-lucide="arrow-right"></i></button>
+                <button id="btn-pan-up" class="btn-mini" title="Pan Up"><i data-lucide="arrow-up"></i></button>
+                <button id="btn-pan-down" class="btn-mini" title="Pan Down"><i data-lucide="arrow-down"></i></button>
+                <div class="separator-v"></div>
+                <button id="btn-reset-view" class="btn-mini" title="Reset View"><i data-lucide="refresh-cw"></i></button>
+            </div>
+        </div>
+
+        <!-- Latency / Performance Stats (Bottom Left) -->
+        <div class="panel stats-panel">
+            <div class="zen-icon"><i data-lucide="activity"></i></div>
+            <div class="panel-content">
+                <span id="fps">FPS: 60</span>
+                <span id="latency">LATENCY: --ms</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- The 3D Canvas -->
+    <canvas id="main-canvas"></canvas>
+
+    <script type="module" src="js/app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
