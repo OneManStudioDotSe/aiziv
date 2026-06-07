@@ -50,7 +50,7 @@ export default class PrezIcosaVisualizer {
 
         const volume = audio.getVolume();
         const data = audio.getFrequencyData();
-        const speedMult = this.params.speed * 0.002;
+        const speedMult = this.params.speed * 0.001;
 
         this.shapes.forEach((shape, i) => {
             const binIndex = Math.floor(i * 10);

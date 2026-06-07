@@ -20,18 +20,19 @@ export default class PrezHexGridVisualizer {
         this.group = new THREE.Group();
         scene.add(this.group);
 
-        const radius = 0.8;
+        // 300% larger than original (0.8 → 2.4)
+        const radius = 2.4;
         const hexGeo = new THREE.CircleGeometry(radius, 6);
-        // Rotate to flat-top
         hexGeo.rotateZ(Math.PI / 2);
 
-        const rows = 12;
-        const cols = 18;
+        // 4 rows × 12 cols covers ~80% of screen height with orthoScale=10
+        const rows = 4;
+        const cols = 12;
         const spacingX = radius * 1.5;
         const spacingY = radius * Math.sqrt(3);
 
         for (let r = 0; r < rows; r++) {
-            for (let c = 0; r < cols; c++) {
+            for (let c = 0; c < cols; c++) {
                 const mat = new THREE.MeshBasicMaterial({
                     color: this.palette[0],
                     transparent: true,
@@ -40,19 +41,14 @@ export default class PrezHexGridVisualizer {
                 });
 
                 const hex = new THREE.Mesh(hexGeo, mat);
-                
-                // Hexagonal grid math
-                const x = (c * spacingX) - (cols * spacingX) / 2;
+
+                const x = (c * spacingX) - (cols * spacingX) / 2 + spacingX / 2;
                 const y = (r * spacingY) - (rows * spacingY) / 2 + (c % 2 === 0 ? 0 : spacingY / 2);
-                
-                hex.position.set(x, y, 0);
+
+                hex.position.set(x, y, -r * 0.01);
                 this.hexagons.push(hex);
                 this.group.add(hex);
-                
-                // Break infinite loop if any
-                if (this.hexagons.length > 300) break;
             }
-            if (this.hexagons.length > 300) break;
         }
 
         camera.position.set(0, 0, 15);
@@ -65,17 +61,12 @@ export default class PrezHexGridVisualizer {
         const data = audio.getFrequencyData();
         if (!data) return;
 
-        const maxVal = Math.max(...data);
-
         this.hexagons.forEach((hex, i) => {
             const bin = i % data.length;
             const ratio = data[bin] / 255;
-            
-            // Replicate the scaling effect from screenshot
+
             const s = 0.1 + ratio * 1.5;
             hex.scale.setScalar(THREE.MathUtils.lerp(hex.scale.x, s, 0.1));
-            
-            // Jitter opacity
             hex.material.opacity = 0.2 + (ratio * 0.6);
         });
     }

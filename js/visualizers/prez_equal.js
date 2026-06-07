@@ -4,7 +4,7 @@ export default class PrezEqualVisualizer {
     constructor() {
         this.group = null;
         this.bars = [];
-        this.count = 70;
+        this.count = 23;
         this.params = { speed: 3 };
         this.palette = [0x000000];
     }
@@ -29,7 +29,9 @@ export default class PrezEqualVisualizer {
             const geo = new THREE.PlaneGeometry(barWidth * 0.8, 1);
             const mat = new THREE.MeshBasicMaterial({
                 color: this.palette[i % this.palette.length],
-                side: THREE.DoubleSide
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.9
             });
             const bar = new THREE.Mesh(geo, mat);
             bar.position.x = (i * barWidth) - (width / 2) + (barWidth / 2);
@@ -46,14 +48,19 @@ export default class PrezEqualVisualizer {
 
         const maxVal = Math.max(...data);
         const height = 20;
+        const col1 = new THREE.Color(this.palette[0]);
+        const col2 = new THREE.Color(this.palette[this.palette.length - 1]);
 
         this.bars.forEach((bar, i) => {
             const val = data[i % data.length];
             const ratio = val / (maxVal || 1);
-            
-            // Vertical expansion from bottom
-            bar.scale.y = ratio * height;
-            bar.position.y = (bar.scale.y / 2) - (height / 2);
+
+            // Bars grow symmetrically from center — distinct from Chop's one-sided expand
+            bar.scale.y = Math.max(0.05, ratio * height);
+            bar.position.y = 0;
+
+            // Color shifts low→high based on amplitude
+            bar.material.color.copy(col1).lerp(col2, ratio);
         });
     }
 

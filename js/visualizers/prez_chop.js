@@ -4,7 +4,7 @@ export default class PrezChopVisualizer {
     constructor() {
         this.group = null;
         this.bars = [];
-        this.count = 70;
+        this.count = 23;
         this.params = { speed: 3 };
         this.palette = [0x000000];
     }
@@ -53,11 +53,12 @@ export default class PrezChopVisualizer {
             const val = data[i % data.length];
             const ratio = val / (maxVal || 1);
             
-            // Replicate horizontal 'chop' - bars expand from center to fill width
-            bar.scale.x = ratio;
-            
-            // Jitter/slide like original
-            bar.position.x = Math.sin(time * 0.001 * this.params.speed + i) * (ratio * 2);
+            // Bars expand from center — exaggerated chop effect
+            bar.scale.x = 0.05 + ratio * 1.2;
+
+            // Bold horizontal slide with alternating direction per bar
+            const dir = i % 2 === 0 ? 1 : -1;
+            bar.position.x = dir * Math.sin(time * 0.001 * this.params.speed + i * 0.5) * (ratio * 5);
         });
     }
 

@@ -1,6 +1,15 @@
 import * as THREE from 'three';
 
 export default class PrezCircleVisualizer {
+    static descriptor = {
+        id: 'prez_circle',
+        name: 'Circle',
+        group: 'PREZIOTTE',
+        perspective: '2d',
+        camera: { preset: 'front-2d', orbitEnabled: false },
+        audio: { usesFrequency: true, usesWaveform: false, frequencyFocus: 'bass+mid' },
+    };
+
     constructor() {
         this.group = null;
         this.circles = [];
@@ -13,10 +22,17 @@ export default class PrezCircleVisualizer {
         this.params = params;
         this.palette = palette;
         this.circles.forEach((c, i) => {
-            // Map palette colors across the layers
-            const col = new THREE.Color(this.palette[i % this.palette.length]);
-            c.material.color.copy(col);
+            c.material.color.copy(this._colorAt(i));
         });
+    }
+
+    _colorAt(i) {
+        // Smooth gradient that interpolates through the full palette
+        const t = i / this.count;
+        const scaled = t * this.palette.length;
+        const fromIdx = Math.floor(scaled) % this.palette.length;
+        const toIdx = (fromIdx + 1) % this.palette.length;
+        return new THREE.Color(this.palette[fromIdx]).lerp(new THREE.Color(this.palette[toIdx]), scaled % 1);
     }
 
     init(scene, camera, renderer) {
@@ -27,12 +43,14 @@ export default class PrezCircleVisualizer {
         const geo = new THREE.CircleGeometry(1, 64);
 
         for (let i = 0; i < this.count; i++) {
+            // Vary opacity: outer circles faint, inner circles bold
+            const opacity = 0.08 + (i / this.count) * 0.35;
             const mat = new THREE.MeshBasicMaterial({
-                color: this.palette[i % this.palette.length],
+                color: this._colorAt(i),
                 transparent: true,
-                opacity: 0.2, // Low opacity for beautiful overlapping colors
+                opacity,
                 side: THREE.DoubleSide,
-                depthWrite: false // Crucial for clean transparency layering
+                depthWrite: false
             });
 
             const circle = new THREE.Mesh(geo, mat);
@@ -44,8 +62,6 @@ export default class PrezCircleVisualizer {
             this.group.add(circle);
         }
 
-        camera.position.set(0, 0, 15);
-        camera.lookAt(0, 0, 0);
     }
 
     update(audio, time) {

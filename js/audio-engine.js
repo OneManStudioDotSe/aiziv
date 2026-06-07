@@ -37,6 +37,11 @@ export class AudioEngine {
         this.init();
         if (this.ctx.state === 'suspended') await this.ctx.resume();
 
+        if (!navigator.mediaDevices?.getUserMedia) {
+            console.error("Microphone access requires a secure context (localhost or HTTPS).");
+            return false;
+        }
+
         try {
             this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             if (this.source) this.source.disconnect();

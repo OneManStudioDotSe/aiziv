@@ -25,7 +25,7 @@ export default class PrezDiagonalVisualizer {
         // Long planes to cover the screen at a 45deg angle
         const aspect = window.innerWidth / window.innerHeight;
         const size = 40; 
-        const geo = new THREE.PlaneGeometry(size * 2, 0.5);
+        const geo = new THREE.PlaneGeometry(size * 2, 1.0);
 
         for (let i = 0; i < this.count; i++) {
             const mat = new THREE.MeshBasicMaterial({
@@ -67,12 +67,13 @@ export default class PrezDiagonalVisualizer {
             const binIndex = Math.floor(i * (data.length / this.count) * 0.5);
             const val = data[binIndex] / 255;
             
-            // Expand width/height based on audio
-            const targetScaleY = 1 + val * 10;
-            band.scale.y = THREE.MathUtils.lerp(band.scale.y, targetScaleY, 0.1);
-            
-            // Slight slide movement
-            band.position.x += Math.sin(time * speedMult + i) * 0.01;
+            // Expand width based on audio — wilder amplitude
+            const targetScaleY = 1 + val * 30;
+            band.scale.y = THREE.MathUtils.lerp(band.scale.y, targetScaleY, 0.15);
+
+            // Aggressive diagonal slide movement
+            band.position.x += Math.sin(time * speedMult + i * 0.7) * 0.05;
+            band.position.y += Math.cos(time * speedMult * 0.5 + i * 0.3) * 0.02;
         });
     }
 

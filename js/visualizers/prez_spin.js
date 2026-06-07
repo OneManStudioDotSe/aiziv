@@ -46,7 +46,7 @@ export default class PrezSpinVisualizer {
         if (!data) return;
 
         const maxVal = Math.max(...data);
-        const speedMult = this.params.speed * 0.01;
+        const speedMult = this.params.speed * 0.005;
 
         this.arcs.forEach((arc, i) => {
             const val = data[i % data.length];

@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { AudioEngine } from './audio-engine.js';
 import { StreamResolver } from './stream-resolver.js';
+import { CameraManager } from './core/CameraManager.js';
+import { fillDefaults, validate } from './core/VisualizerDescriptor.js';
 
 class App {
     constructor() {
@@ -40,25 +41,11 @@ class App {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(this.backgrounds[0]);
         
-        this.perspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.perspectiveCamera.position.set(0, 5, 12);
-        
-        const aspect = window.innerWidth / window.innerHeight;
-        const d = 10;
-        this.orthoCamera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
-        this.orthoCamera.position.set(0, 0, 10);
-        this.orthoCamera.lookAt(0, 0, 0);
-
-        this.camera = this.perspectiveCamera;
-
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        
-        this.controls = new OrbitControls(this.perspectiveCamera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
-        this.controls.screenSpacePanning = true;
+
+        this.cameraManager = new CameraManager(this.renderer.domElement);
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         this.scene.add(ambientLight);
@@ -139,31 +126,31 @@ class App {
     initSceneControls() {
         const zoomStep = 4;
         const panStep = 3;
-        document.getElementById('btn-zoom-in').onclick = () => this.animateCameraProperty(this.camera.position, 'z', this.camera.position.z - zoomStep);
-        document.getElementById('btn-zoom-out').onclick = () => this.animateCameraProperty(this.camera.position, 'z', this.camera.position.z + zoomStep);
+        document.getElementById('btn-zoom-in').onclick = () => this.animateCameraProperty(this.cameraManager.activeCamera.position, 'z', this.cameraManager.activeCamera.position.z - zoomStep);
+        document.getElementById('btn-zoom-out').onclick = () => this.animateCameraProperty(this.cameraManager.activeCamera.position, 'z', this.cameraManager.activeCamera.position.z + zoomStep);
         document.getElementById('btn-pan-left').onclick = () => {
-            this.animateCameraProperty(this.camera.position, 'x', this.camera.position.x - panStep);
-            this.animateCameraProperty(this.controls.target, 'x', this.controls.target.x - panStep);
+            this.animateCameraProperty(this.cameraManager.activeCamera.position, 'x', this.cameraManager.activeCamera.position.x - panStep);
+            this.animateCameraProperty(this.cameraManager.controls.target, 'x', this.cameraManager.controls.target.x - panStep);
         };
         document.getElementById('btn-pan-right').onclick = () => {
-            this.animateCameraProperty(this.camera.position, 'x', this.camera.position.x + panStep);
-            this.animateCameraProperty(this.controls.target, 'x', this.controls.target.x + panStep);
+            this.animateCameraProperty(this.cameraManager.activeCamera.position, 'x', this.cameraManager.activeCamera.position.x + panStep);
+            this.animateCameraProperty(this.cameraManager.controls.target, 'x', this.cameraManager.controls.target.x + panStep);
         };
         document.getElementById('btn-pan-up').onclick = () => {
-            this.animateCameraProperty(this.camera.position, 'y', this.camera.position.y + panStep);
-            this.animateCameraProperty(this.controls.target, 'y', this.controls.target.y + panStep);
+            this.animateCameraProperty(this.cameraManager.activeCamera.position, 'y', this.cameraManager.activeCamera.position.y + panStep);
+            this.animateCameraProperty(this.cameraManager.controls.target, 'y', this.cameraManager.controls.target.y + panStep);
         };
         document.getElementById('btn-pan-down').onclick = () => {
-            this.animateCameraProperty(this.camera.position, 'y', this.camera.position.y - panStep);
-            this.animateCameraProperty(this.controls.target, 'y', this.controls.target.y - panStep);
+            this.animateCameraProperty(this.cameraManager.activeCamera.position, 'y', this.cameraManager.activeCamera.position.y - panStep);
+            this.animateCameraProperty(this.cameraManager.controls.target, 'y', this.cameraManager.controls.target.y - panStep);
         };
         document.getElementById('btn-reset-view').onclick = () => {
-            this.animateCameraProperty(this.camera.position, 'x', 0);
-            this.animateCameraProperty(this.camera.position, 'y', 5);
-            this.animateCameraProperty(this.camera.position, 'z', 12);
-            this.animateCameraProperty(this.controls.target, 'x', 0);
-            this.animateCameraProperty(this.controls.target, 'y', 0);
-            this.animateCameraProperty(this.controls.target, 'z', 0);
+            this.animateCameraProperty(this.cameraManager.activeCamera.position, 'x', 0);
+            this.animateCameraProperty(this.cameraManager.activeCamera.position, 'y', 5);
+            this.animateCameraProperty(this.cameraManager.activeCamera.position, 'z', 12);
+            this.animateCameraProperty(this.cameraManager.controls.target, 'x', 0);
+            this.animateCameraProperty(this.cameraManager.controls.target, 'y', 0);
+            this.animateCameraProperty(this.cameraManager.controls.target, 'z', 0);
         };
     }
 
@@ -192,7 +179,7 @@ class App {
             const progress = Math.min(elapsed / duration, 1);
             const ease = 1 - Math.pow(1 - progress, 3);
             object[prop] = startVal + (targetVal - startVal) * ease;
-            this.controls.update();
+            this.cameraManager.controls.update();
             if (progress < 1) requestAnimationFrame(animate);
         };
         requestAnimationFrame(animate);
@@ -258,15 +245,16 @@ class App {
             const VisualizerClass = module.default;
             this.activeVisualizer = new VisualizerClass();
             
-            if (id.startsWith('prez_')) {
-                this.camera = this.orthoCamera;
-                this.controls.enabled = false;
+            const descriptor = VisualizerClass.descriptor;
+            if (descriptor) {
+                const normalized = fillDefaults(descriptor);
+                validate(normalized);
+                this.cameraManager.applyDescriptor(normalized);
             } else {
-                this.camera = this.perspectiveCamera;
-                this.controls.enabled = true;
+                this.cameraManager.applyLegacy(id);
             }
 
-            this.activeVisualizer.init(this.scene, this.camera, this.renderer);
+            this.activeVisualizer.init(this.scene, this.cameraManager.activeCamera, this.renderer);
             if (this.activeVisualizer.setParams) {
                 this.activeVisualizer.setParams(this.params, this.palettes[this.params.palette]);
             }
@@ -454,24 +442,25 @@ class App {
     }
 
     onResize() {
-        this.perspectiveCamera.aspect = window.innerWidth / window.innerHeight;
-        this.perspectiveCamera.updateProjectionMatrix();
-        const aspect = window.innerWidth / window.innerHeight;
-        const d = 10;
-        this.orthoCamera.left = -d * aspect;
-        this.orthoCamera.right = d * aspect;
-        this.orthoCamera.top = d;
-        this.orthoCamera.bottom = -d;
-        this.orthoCamera.updateProjectionMatrix();
+        this.cameraManager.onResize();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     animate(time) {
         requestAnimationFrame((t) => this.animate(t));
-        if (this.activeVisualizer) this.activeVisualizer.update(this.audio, time);
+        const deltaTime = Math.min(time - (this.lastTime || time), 50);
+
+        if (this.activeVisualizer) {
+            if (this.activeVisualizer.constructor.descriptor) {
+                this.activeVisualizer.update(this.audio, deltaTime, time);
+            } else {
+                this.activeVisualizer.update(this.audio, time);
+            }
+        }
+
         this.updateProgressUI();
-        this.controls.update();
-        this.renderer.render(this.scene, this.camera);
+        this.cameraManager.update();
+        this.renderer.render(this.scene, this.cameraManager.activeCamera);
         if (time % 10 < 1) {
             const fpsElem = document.getElementById('fps');
             if (fpsElem) fpsElem.textContent = `FPS: ${Math.round(1000 / (time - this.lastTime || 16))}`;

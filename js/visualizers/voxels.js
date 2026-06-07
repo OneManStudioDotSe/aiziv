@@ -1,6 +1,15 @@
 import * as THREE from 'three';
 
 export default class VoxelVisualizer {
+    static descriptor = {
+        id: 'voxels',
+        name: 'Voxel Pulse',
+        group: 'EXPERIMENTAL',
+        perspective: '3d',
+        camera: { preset: 'isometric-3d', orbitEnabled: true },
+        audio: { usesFrequency: true, usesWaveform: false, frequencyFocus: 'full' },
+    };
+
     constructor() {
         this.group = null;
         this.voxels = [];
@@ -34,8 +43,6 @@ export default class VoxelVisualizer {
             }
         }
 
-        camera.position.set(10, 10, 10);
-        camera.lookAt(0, 0, 0);
     }
 
     update(audio, time) {

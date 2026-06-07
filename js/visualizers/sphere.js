@@ -1,6 +1,15 @@
 import * as THREE from 'three';
 
 export default class SphereVisualizer {
+    static descriptor = {
+        id: 'sphere',
+        name: 'Spectrum Sphere',
+        group: '3D GEOMETRY',
+        perspective: '3d',
+        camera: { preset: 'close-up-3d', orbitEnabled: true },
+        audio: { usesFrequency: true, usesWaveform: false, frequencyFocus: 'full' },
+    };
+
     constructor() {
         this.mesh = null;
         this.originalPositions = null;
@@ -29,7 +38,6 @@ export default class SphereVisualizer {
         this.mesh = new THREE.Mesh(geometry, material);
         scene.add(this.mesh);
         this.originalPositions = geometry.attributes.position.array.slice();
-        camera.position.set(0, 0, 8);
     }
 
     update(audio, time) {
